@@ -4,6 +4,7 @@ import com.fedorenko.test.domain.User;
 import com.fedorenko.test.repository.UserRepository;
 import com.fedorenko.test.util.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -11,8 +12,13 @@ import java.util.List;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
+
+    public User create(User user) {
+        return userRepository.save(user);
+    }
 
     public List<User> getAll() {
         return userRepository.findAll();
@@ -53,8 +59,17 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public List<User> getByBirthDateRange(LocalDate date1, LocalDate date2) {
-        return userRepository.findAllByDateOfBirthBetween(date1, date2);
+    public List<User> getByBirthDateRange(LocalDate from, LocalDate to) {
+        if (from.isBefore(to)) {
+            List<User> userList = userRepository.findAllByDateOfBirthBetween(from, to);
+            if (userList.isEmpty()) {
+                throw new UserNotFoundException("No match found");
+            } else {
+                return userList;
+            }
+        } else {
+            throw new IllegalArgumentException("Please follow the sequence of entering dates");
+        }
     }
 
     private <T> boolean isFieldNew(T newField, T existField) {
